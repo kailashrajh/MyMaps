@@ -4,7 +4,18 @@
     android:layout_height="match_parent"
     android:background="@drawable/backgroud">
 
+    <TextView
+        android:id="@+id/heading"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
 
+        android:paddingLeft="100dp"
+        android:paddingTop="50dp"
+        android:paddingRight="100dp"
+        android:text="MyMaps"
+        android:textColor="@color/White"
+        android:textSize="50sp" />
 
     <ScrollView
         android:id="@+id/login_form"
@@ -20,13 +31,7 @@
             android:layout_marginTop="200dp"
             android:padding="20dp">
 
-            <TextView
-                android:id="@+id/heading"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:text="Welcome"
-                android:textSize="40sp" />
+
 
             <EditText
                 android:id="@+id/email"

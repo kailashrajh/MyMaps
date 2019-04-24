@@ -1,6 +1,5 @@
 package com.example.mymaps;
 
-import android.*;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -30,10 +29,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
@@ -57,15 +56,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final float DEFAULT_ZOOM = 15f;
     
     //widgets
-    private EditText mSearchText;
+    
     private ImageView mGps;
     //vars
     private Boolean mLocationPermissionsGranted = false;
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
-    private UserLocation mUserPosition;
-    private GeoApiContext mGeoApiContext;
-    @Override
+    private String searchString;
+    private String google_maps_api = "AIzaSyDMGkbT15S9z9AzHI_Hhlp9jRCSy7ApzOU";
+    
+    
     public void onMapReady(GoogleMap googleMap)
     {
         Toast.makeText(this, "Map is Ready", Toast.LENGTH_SHORT).show();
@@ -84,8 +84,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             mMap.setMyLocationEnabled(true);
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
-            
+    
+            // Initialize Places.
+            Places.initialize(getApplicationContext(),google_maps_api);
+    
             init();
+            autocompletePlaces();
         }
     }
     
@@ -96,47 +100,57 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        mSearchText = (EditText) findViewById(R.id.input_search);
+        //mSearchText = (EditText) findViewById(R.id.input_search);
         mGps = (ImageView) findViewById(R.id.ic_gps);
         
         
         getLocationPermission();
+    
+    }
+    
+    private void autocompletePlaces()
+    {
+        AutocompleteSupportFragment autocompleteFragment = (AutocompleteSupportFragment)
+                getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
+
+        // Specify the types of place data to return.
+        autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
+
+        // Set up a PlaceSelectionListener to handle the response.
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener()
+        {
+            @Override
+            public void onPlaceSelected(Place place)
+            {
+                // TODO: Get info about the selected place.
+                Log.i(TAG, "Place: " + place.getName() + ", " + place.getId());
+                searchString = place.getName();
+                geoLocate();
+            }
         
+            @Override
+            public void onError(Status status)
+            {
+                // TODO: Handle the error.
+                Log.i(TAG, "An error occurred: " + status);
+            }
+        });
     }
     
     private void init()
     {
         Log.d(TAG, "init: initializing");
         
-        mSearchText.setOnEditorActionListener(new TextView.OnEditorActionListener()
-        {
-            @Override
-            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent)
-            {
-                if(actionId == EditorInfo.IME_ACTION_SEARCH
-                        || actionId == EditorInfo.IME_ACTION_DONE
-                        || keyEvent.getAction() == KeyEvent.ACTION_DOWN
-                        || keyEvent.getAction() == KeyEvent.KEYCODE_ENTER){
-                    
-                    //execute our method for searching
-                    geoLocate();
-                }
-                
-                return false;
-            }
-        });
-        
         mGps.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                Log.d(TAG, "onClick: clicked gps icon");
+                Log.d(TAG, "onClick: getting device location");
                 getDeviceLocation();
             }
         });
         
-        //autoComplete();
         hideSoftKeyboard();
     }
     
@@ -144,7 +158,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     {
         Log.d(TAG, "geoLocate: geolocating");
         
-        String searchString = mSearchText.getText().toString();
+        
         
         Geocoder geocoder = new Geocoder(MapsActivity.this);
         List<Address> list = new ArrayList<>();
@@ -292,37 +306,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
     
-    private void calculateDirections(Marker marker){
-        Log.d(TAG, "calculateDirections: calculating directions.");
-        
-                LatLng destination = new LatLng(
-                marker.getPosition().latitude,
-                marker.getPosition().longitude
-        );
-        DirectionsApiRequest directions = new DirectionsApiRequest(mGeoApiContext);
-        
-        directions.alternatives(true);
-        directions.origin(
-                new com.google.maps.model.LatLng(
-                        mUserPosition.getGeo_point().getLatitude(),
-                        mUserPosition.getGeo_point().getLongitude()
-                )
-        );
-        Log.d(TAG, "calculateDirections: destination: " + destination.toString());
-        directions.destination(destination).setCallback(new PendingResult.Callback<DirectionsResult>() {
-            @Override
-            public void onResult(DirectionsResult result) {
-                Log.d(TAG, "calculateDirections: routes: " + result.routes[0].toString());
-                Log.d(TAG, "calculateDirections: duration: " + result.routes[0].legs[0].duration);
-                Log.d(TAG, "calculateDirections: distance: " + result.routes[0].legs[0].distance);
-                Log.d(TAG, "calculateDirections: geocodedWayPoints: " + result.geocodedWaypoints[0].toString());
-            }
-            
-            @Override
-            public void onFailure(Throwable e) {
-                Log.e(TAG, "calculateDirections: Failed to get directions: " + e.getMessage() );
-                
-            }
-        });
-    }
+   
+    
 }
