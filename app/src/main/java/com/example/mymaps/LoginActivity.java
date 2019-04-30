@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -40,13 +41,16 @@ public class LoginActivity extends AppCompatActivity implements
     private EditText mEmail, mPassword;
     private ProgressBar mProgressBar;
     
+    
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         mEmail = findViewById(R.id.email);
         mPassword = findViewById(R.id.password);
         mProgressBar = findViewById(R.id.progressBar);
+        
         
         setupFirebaseAuth();
         findViewById(R.id.email_sign_in_button).setOnClickListener(this);
@@ -58,32 +62,39 @@ public class LoginActivity extends AppCompatActivity implements
     
     
     
-    private void showDialog(){
+    private void showDialog()
+    {
         mProgressBar.setVisibility(View.VISIBLE);
         
     }
     
-    private void hideDialog(){
+    private void hideDialog()
+    {
         if(mProgressBar.getVisibility() == View.VISIBLE){
             mProgressBar.setVisibility(View.INVISIBLE);
         }
     }
     
-    private void hideSoftKeyboard(){
+    private void hideSoftKeyboard()
+    {
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
     
     /*
         ----------------------------- Firebase setup ---------------------------------
      */
-    private void setupFirebaseAuth(){
+    private void setupFirebaseAuth()
+    {
         Log.d(TAG, "setupFirebaseAuth: started.");
         
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
+        mAuthListener = new FirebaseAuth.AuthStateListener()
+        {
             @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+            public void onAuthStateChanged(@NonNull final FirebaseAuth firebaseAuth)
+            {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
+                if (user != null)
+                {
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
                     Toast.makeText(LoginActivity.this, "Authenticated with: " + user.getEmail(), Toast.LENGTH_SHORT).show();
                     
@@ -96,13 +107,16 @@ public class LoginActivity extends AppCompatActivity implements
                     DocumentReference userRef = db.collection(getString(R.string.collection_users))
                             .document(user.getUid());
                     
-                    userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                   
+                    
+                    userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>()
+                    {
                         @Override
                         public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                            if(task.isSuccessful()){
+                            if(task.isSuccessful())
+                            {
                                 Log.d(TAG, "onComplete: successfully set the user client.");
-                               // User user = task.getResult().toObject(User.class);
-                               // ((UserClient)(getApplicationContext())).setUser(user);
+                                //User user = task.getResult().toObject(User.class);
                             }
                         }
                     });
@@ -122,32 +136,39 @@ public class LoginActivity extends AppCompatActivity implements
     }
     
     @Override
-    public void onStart() {
+    public void onStart()
+    {
         super.onStart();
         FirebaseAuth.getInstance().addAuthStateListener(mAuthListener);
     }
     
     @Override
-    public void onStop() {
+    public void onStop()
+    {
         super.onStop();
-        if (mAuthListener != null) {
+        if (mAuthListener != null)
+        {
             FirebaseAuth.getInstance().removeAuthStateListener(mAuthListener);
         }
     }
     
-    private void signIn(){
+    private void signIn()
+    {
         //check if the fields are filled out
         if(!isEmpty(mEmail.getText().toString())
-                && !isEmpty(mPassword.getText().toString())){
+                && !isEmpty(mPassword.getText().toString()))
+        {
             Log.d(TAG, "onClick: attempting to authenticate.");
             
             showDialog();
             
             FirebaseAuth.getInstance().signInWithEmailAndPassword(mEmail.getText().toString(),
                     mPassword.getText().toString())
-                    .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    .addOnCompleteListener(new OnCompleteListener<AuthResult>()
+                    {
                         @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
+                        public void onComplete(@NonNull Task<AuthResult> task)
+                        {
                             
                             hideDialog();
                             
@@ -159,24 +180,36 @@ public class LoginActivity extends AppCompatActivity implements
                     hideDialog();
                 }
             });
-        }else{
+        }
+        else
+        {
             Toast.makeText(LoginActivity.this, "You didn't fill in all the fields.", Toast.LENGTH_SHORT).show();
         }
     }
     
     @Override
-    public void onClick(View view) {
-        switch (view.getId()){
-            case R.id.link_register:{
+    public void onClick(View view)
+    {
+        switch (view.getId())
+        {
+            case R.id.link_register:
+            {
                 Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
                 startActivity(intent);
                 break;
             }
             
-            case R.id.email_sign_in_button:{
+            case R.id.email_sign_in_button:
+            {
                 signIn();
                 break;
             }
         }
+    }
+    
+    
+    private void setUserInfo()
+    {
+    
     }
 }

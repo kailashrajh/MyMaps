@@ -21,6 +21,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.mymaps.MapsActivity;
@@ -28,6 +29,9 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.security.PrivilegedAction;
 
@@ -37,6 +41,7 @@ public class MainActivity extends AppCompatActivity
     private static final String TAG = "MainActivity";
     private static final int ERROR_DIALOG_REQUEST = 9001;
     
+    
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -44,8 +49,8 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        
-        if(isServicesOK())
+        isServicesOK();
+        /*if(isServicesOK())
         {
             FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
             fab.setOnClickListener(new View.OnClickListener()
@@ -59,7 +64,7 @@ public class MainActivity extends AppCompatActivity
                             .setAction("Action", null).show();
                 }
             });
-        }
+        }*/
         
         
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -70,16 +75,12 @@ public class MainActivity extends AppCompatActivity
         
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-        
-       
+    
+    
     }
     
     
-    
-    
-   
-        
-        @Override
+    @Override
     public void onBackPressed()
     {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -130,16 +131,15 @@ public class MainActivity extends AppCompatActivity
         
         if (id == R.id.nav_profile)
         {
-            Intent intentProfile = new Intent(MainActivity.this,MainActivity.class);
+            Intent intentProfile = new Intent(MainActivity.this, MainActivity.class);
             startActivity(intentProfile);
         } else if (id == R.id.nav_maps)
         {
-            Intent intentMaps = new Intent(MainActivity.this,MapsActivity.class);
+            Intent intentMaps = new Intent(MainActivity.this, MapsActivity.class);
             startActivity(intentMaps);
-        }
-        else if (id == R.id.nav_settings)
+        } else if (id == R.id.nav_settings)
         {
-            Intent intentSettings = new Intent(MainActivity.this,MainActivity.class);
+            Intent intentSettings = new Intent(MainActivity.this, MainActivity.class);
             startActivity(intentSettings);
         }
         
@@ -155,23 +155,22 @@ public class MainActivity extends AppCompatActivity
         
         int available = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(MainActivity.this);
         
-        if(available == ConnectionResult.SUCCESS)
+        if (available == ConnectionResult.SUCCESS)
         {
             //everything is fine and the user can make map requests
             Log.d(TAG, "isServicesOK: Google Play Services is working");
             return true;
-        }
-        else if(GoogleApiAvailability.getInstance().isUserResolvableError(available))
+        } else if (GoogleApiAvailability.getInstance().isUserResolvableError(available))
         {
             //an error occured but we can resolve it
             Log.d(TAG, "isServicesOK: an error occured but we can fix it");
             Dialog dialog = GoogleApiAvailability.getInstance().getErrorDialog(MainActivity.this, available, ERROR_DIALOG_REQUEST);
             dialog.show();
-        }
-        else
+        } else
         {
             Toast.makeText(this, "You can't make map requests", Toast.LENGTH_SHORT).show();
         }
         return false;
     }
+    
 }
