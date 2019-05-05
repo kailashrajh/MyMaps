@@ -42,6 +42,9 @@ import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.common.collect.Maps;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
@@ -54,6 +57,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static android.widget.Toast.LENGTH_SHORT;
 
 /**
  * Created by User on 10/2/2017.
@@ -70,20 +75,60 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     
     //widgets
     private ImageView mGps;
-    
+    private ImageView mSave;
     //vars
     private Boolean mLocationPermissionsGranted = false;
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private String searchString;
     private GeoPoint mUserLocation;
+    private GeoPoint mUserDestintaion;
     private Marker mTrip;
     private LatLng mLatLng;
     private ArrayList<PolylineData> mPolylineData = new ArrayList<>();
+    private UserTrips mUserTrips;
+    private FirebaseFirestore mDb;
     
+    
+    private void saveUserTrip()
+    {
+        if(mUserTrips != null)
+        {
+            DocumentReference tripRef = mDb
+                    .collection(getString(R.string.collections_trips))
+                    .document(FirebaseAuth.getInstance().getUid());
+            
+            tripRef.set(mUserTrips).addOnCompleteListener(new OnCompleteListener<Void>()
+            {
+                @Override
+                public void onComplete(@NonNull Task<Void> task)
+                {
+                    if(task.isSuccessful())
+                    {
+                        Log.d(TAG, "onComplete: Saved user trip");
+                        
+                    }
+                }
+            });
+            Toast.makeText(this,"Trip has been saved to database",Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void getUserDetails()
+    {
+        if(mUserTrips == null)
+        {
+            mUserTrips = new UserTrips();
+        }
+        
+        User user = ((UserClient)getApplication()).getUser();
+        mUserTrips.setUser(user);
+        
+        getDeviceLocation();
+    }
     public void onMapReady(GoogleMap googleMap)
     {
-        Toast.makeText(this, "Map is Ready", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Map is Ready", LENGTH_SHORT).show();
         Log.d(TAG, "onMapReady: map is ready");
         mMap = googleMap;
         
@@ -106,9 +151,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     
             init();
             autocompletePlaces();
+            getUserDetails();
+            getDeviceLocation();
         }
     }
-    
     
     
     @Override
@@ -117,9 +163,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         //mSearchText = (EditText) findViewById(R.id.input_search);
-        mGps = (ImageView) findViewById(R.id.ic_gps);
+        mGps = findViewById(R.id.ic_gps);
+        mSave = findViewById(R.id.ic_save_trip);
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        
+        mDb = FirebaseFirestore.getInstance();
         getLocationPermission();
     
     }
@@ -164,14 +211,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
         
+        mSave.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                getUserDetails();
+                saveUserTrip();
+                Log.d(TAG, "onClick: Saving trip to database");
+            }
+        });
+        
         hideSoftKeyboard();
     }
     
     private void geoLocate()
     {
         Log.d(TAG, "geoLocate: geolocating");
-        
-        
+    
         
         Geocoder geocoder = new Geocoder(MapsActivity.this);
         
@@ -193,9 +250,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             //Toast.makeText(this, address.toString(), Toast.LENGTH_SHORT).show();
             
             mLatLng = new LatLng(address.getLatitude(),address.getLongitude());
-            
+            mUserDestintaion = new GeoPoint(address.getLatitude(),address.getLongitude());
             moveCamera(mLatLng,DEFAULT_ZOOM,address.getAddressLine(0));
            
+            mUserTrips.setGeoPointDestination(mUserDestintaion);
         }
     }
     
@@ -224,11 +282,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             moveCamera(new LatLng(mUserLocation.getLatitude(), mUserLocation.getLongitude()),
                                     DEFAULT_ZOOM,"My Location");
                             
+                            
+                            
                         }
                         else
                         {
                             Log.d(TAG, "onComplete: current location is null");
-                            Toast.makeText(MapsActivity.this, "unable to get current location", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MapsActivity.this, "unable to get current location", LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -368,6 +428,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         catch (BootstrapMethodError error)
         {
             Log.d(TAG, "calculateDirections: An error occurred "+ error.getMessage());
+        }
+        finally
+        {
+            mUserTrips.setGeoPointUser(mUserLocation);
+            mUserTrips.setTimestamp(null);
         }
         
     }

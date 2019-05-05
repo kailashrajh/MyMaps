@@ -42,6 +42,8 @@ public class LoginActivity extends AppCompatActivity implements
     private ProgressBar mProgressBar;
     
     
+    //vars
+   
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -116,7 +118,10 @@ public class LoginActivity extends AppCompatActivity implements
                             if(task.isSuccessful())
                             {
                                 Log.d(TAG, "onComplete: successfully set the user client.");
-                                //User user = task.getResult().toObject(User.class);
+                                User user = task.getResult().toObject(User.class);
+                                ((UserClient)getApplication()).setUser(user);
+    
+                               
                             }
                         }
                     });
@@ -207,9 +212,11 @@ public class LoginActivity extends AppCompatActivity implements
         }
     }
     
-    
-    private void setUserInfo()
+    private void setProfile()
     {
+        
+        
     
+        
     }
 }

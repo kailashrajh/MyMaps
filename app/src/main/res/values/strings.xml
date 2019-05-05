@@ -29,6 +29,7 @@
 
     <!-- Firestore Strings -->
     <string name="collection_users">Users</string>
+    <string name="collections_trips">Trips</string>
     <string name="title_activity_maps">Map</string>
     <string name="title_activity_settings">Settings</string>
 
